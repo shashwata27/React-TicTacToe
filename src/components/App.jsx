@@ -62,10 +62,15 @@ class Board extends React.Component {
 }
 
 export default class App extends React.Component {
-  state = { history: [{ squares: Array(9).fill(null) }], xIsNext: true };
+  state = {
+    history: [{ squares: Array(9).fill(null) }],
+    stepNumber: 0,
+    xIsNext: true,
+  };
 
   handleClick = (i) => {
-    const history = this.state.history;
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    // slice only the amount of histroy that was generated in past point of time
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     // creating copy
@@ -75,14 +80,34 @@ export default class App extends React.Component {
     squares[i] = this.state.xIsNext ? "X" : "O";
     this.setState({
       history: history.concat([{ squares: squares }]),
+      stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
     });
   };
 
+  jumpTo(moveIndx) {
+    this.setState({
+      stepNumber: moveIndx,
+      xIsNext: moveIndx % 2 === 0,
+    });
+  }
+
   render() {
     const history = this.state.history;
-    const current = history[history.length - 1];
+    const current = history[this.state.stepNumber];
+    // to go back in time we use stepNumber
     const winner = calculateWinner(current.squares);
+
+    const moves = history.map((move, moveIndx) => {
+      // move is the array []
+      // moveIndx is the index of the array
+      const desc = moveIndx ? `Goto move #${moveIndx}` : `Goto Start`;
+      return (
+        <li key={moveIndx}>
+          <button onClick={() => this.jumpTo(moveIndx)}>{desc}</button>
+        </li>
+      );
+    });
 
     let status;
     if (winner) {
@@ -100,7 +125,7 @@ export default class App extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
